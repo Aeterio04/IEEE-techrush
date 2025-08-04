@@ -12,17 +12,32 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch data from backend
+  // Fetch data from Django backend
   const fetchDonations = async () => {
     try {
       setLoading(true);
-      // Replace with your actual API endpoint
-      const response = await fetch('https://api.yourbackend.com/donations');
+      // Django endpoint with proper authentication
+      const response = await fetch('/api/donations/', {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        }
+      });
+      
       if (!response.ok) {
         throw new Error('Failed to fetch donations');
       }
+      
       const data = await response.json();
-      setDonations(data);
+      
+      // Transform Django response to match our frontend structure
+      const transformedData = {
+        pending: data.filter(d => d.status === 'pending'),
+        accepted: data.filter(d => d.status === 'accepted' || d.status === 'submitted'),
+        rejected: data.filter(d => d.status === 'rejected')
+      };
+      
+      setDonations(transformedData);
       setLoading(false);
     } catch (err) {
       setError(err.message);
@@ -41,9 +56,21 @@ const AdminDashboard = () => {
 
   const handleLogout = () => {
     if (window.confirm('Are you sure you want to logout?')) {
-      alert('Logging out... See you soon! 👋');
-      console.log('Admin logged out');
-      // Add logout logic here
+      // Django logout logic
+      fetch('/api/auth/logout/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        }
+      })
+      .then(() => {
+        localStorage.removeItem('access_token');
+        window.location.href = '/login';
+      })
+      .catch(err => {
+        console.error('Logout error:', err);
+      });
     }
   };
 
@@ -53,12 +80,18 @@ const AdminDashboard = () => {
 
   const acceptDonation = async (id) => {
     try {
-      const response = await fetch(`https://api.yourbackend.com/donations/${id}/accept`, {
-        method: 'PUT'
+      const response = await fetch(`/api/donations/${id}/accept/`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        }
       });
+      
       if (!response.ok) {
         throw new Error('Failed to accept donation');
       }
+      
       fetchDonations(); // Refresh data
       alert('Donation accepted successfully! ✅');
     } catch (err) {
@@ -71,16 +104,19 @@ const AdminDashboard = () => {
     const reason = prompt('Please provide a reason for rejection:');
     if (reason) {
       try {
-        const response = await fetch(`https://api.yourbackend.com/donations/${id}/reject`, {
-          method: 'PUT',
+        const response = await fetch(`/api/donations/${id}/reject/`, {
+          method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
           },
           body: JSON.stringify({ reason })
         });
+        
         if (!response.ok) {
           throw new Error('Failed to reject donation');
         }
+        
         fetchDonations(); // Refresh data
         alert('Donation rejected successfully! ❌');
       } catch (err) {
@@ -92,12 +128,18 @@ const AdminDashboard = () => {
 
   const markAsSubmitted = async (id) => {
     try {
-      const response = await fetch(`https://api.yourbackend.com/donations/${id}/submit`, {
-        method: 'PUT'
+      const response = await fetch(`/api/donations/${id}/submit/`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        }
       });
+      
       if (!response.ok) {
         throw new Error('Failed to mark as submitted');
       }
+      
       fetchDonations(); // Refresh data
       alert('Donation marked as submitted! 📦');
     } catch (err) {
@@ -109,15 +151,24 @@ const AdminDashboard = () => {
   const updateCounts = () => {
     return {
       pending: donations.pending.length,
-      accepted: donations.accepted.length,
-      submitted: donations.accepted.filter(d => d.submitted).length,
+      accepted: donations.accepted.filter(d => d.status === 'accepted').length,
+      submitted: donations.accepted.filter(d => d.status === 'submitted').length,
       rejected: donations.rejected.length
     };
   };
 
   const renderDonations = () => {
-    const donationList = donations[currentTab];
+    let donationList = [];
     const counts = updateCounts();
+
+    // Filter donations based on current tab
+    if (currentTab === 'pending') {
+      donationList = donations.pending;
+    } else if (currentTab === 'accepted') {
+      donationList = donations.accepted;
+    } else {
+      donationList = donations.rejected;
+    }
 
     if (loading) {
       return (
@@ -151,14 +202,20 @@ const AdminDashboard = () => {
     }
 
     return donationList.map(donation => {
+      const donorName = donation.donor?.first_name 
+        ? `${donation.donor.first_name} ${donation.donor.last_name}`
+        : donation.donor?.username || 'Anonymous';
+      
+      const donorEmail = donation.donor?.email || donation.donor_email || 'No email provided';
+      
       if (currentTab === 'pending') {
         return (
           <div key={donation.id} className="donation-card">
             <div className="donation-header">
               <div className="donation-info">
                 <h3>{donation.item}</h3>
-                <p>by {donation.donor}</p>
-                <p className="donor-email">{donation.email}</p>
+                <p>by {donorName}</p>
+                <p className="donor-email">{donorEmail}</p>
               </div>
               <span className="status-badge pending">Pending</span>
             </div>
@@ -169,7 +226,7 @@ const AdminDashboard = () => {
               </div>
               <div className="detail-item">
                 <span>Date:</span>
-                <span>{donation.date}</span>
+                <span>{new Date(donation.date).toLocaleDateString()}</span>
               </div>
               <div className="detail-item full-width">
                 <span>Location:</span>
@@ -193,11 +250,11 @@ const AdminDashboard = () => {
             <div className="donation-header">
               <div className="donation-info">
                 <h3>{donation.item}</h3>
-                <p>by {donation.donor}</p>
-                <p className="donor-email">{donation.email}</p>
+                <p>by {donorName}</p>
+                <p className="donor-email">{donorEmail}</p>
               </div>
-              <span className={`status-badge ${donation.submitted ? 'submitted' : 'accepted'}`}>
-                {donation.submitted ? 'Submitted' : 'Accepted'}
+              <span className={`status-badge ${donation.status === 'submitted' ? 'submitted' : 'accepted'}`}>
+                {donation.status === 'submitted' ? 'Submitted' : 'Accepted'}
               </span>
             </div>
             <div className="donation-details">
@@ -207,7 +264,7 @@ const AdminDashboard = () => {
               </div>
               <div className="detail-item">
                 <span>Date:</span>
-                <span>{donation.date}</span>
+                <span>{new Date(donation.date).toLocaleDateString()}</span>
               </div>
               <div className="detail-item full-width">
                 <span>Location:</span>
@@ -215,7 +272,7 @@ const AdminDashboard = () => {
               </div>
             </div>
             <p className="donation-description">{donation.description}</p>
-            {!donation.submitted ? (
+            {donation.status !== 'submitted' ? (
               <button onClick={() => markAsSubmitted(donation.id)} className="action-button submit">
                 Mark as Submitted
               </button>
@@ -235,8 +292,8 @@ const AdminDashboard = () => {
             <div className="donation-header">
               <div className="donation-info">
                 <h3>{donation.item}</h3>
-                <p>by {donation.donor}</p>
-                <p className="donor-email">{donation.email}</p>
+                <p>by {donorName}</p>
+                <p className="donor-email">{donorEmail}</p>
               </div>
               <span className="status-badge rejected">Rejected</span>
             </div>
@@ -247,7 +304,7 @@ const AdminDashboard = () => {
               </div>
               <div className="detail-item">
                 <span>Date:</span>
-                <span>{donation.date}</span>
+                <span>{new Date(donation.date).toLocaleDateString()}</span>
               </div>
               <div className="detail-item full-width">
                 <span>Location:</span>
@@ -257,7 +314,7 @@ const AdminDashboard = () => {
             <p className="donation-description">{donation.description}</p>
             <div className="rejection-reason">
               <p>Rejection Reason:</p>
-              <p>{donation.reason}</p>
+              <p>{donation.reason || 'No reason provided'}</p>
             </div>
           </div>
         );

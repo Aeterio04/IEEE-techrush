@@ -1,5 +1,7 @@
 import React, { useEffect } from "react";
 import "./Home.css";
+import Navbar from "../Components/Navbar";
+import Footer from "../components/Footer";
 
 const HeroSection = () => {
   useEffect(() => {
@@ -36,6 +38,7 @@ const HeroSection = () => {
 
   return (
     <>
+      <Navbar />
       <section className="hero-section">
         <div className="hero-background"></div>
 
@@ -84,6 +87,7 @@ const HeroSection = () => {
           </div>
         </div>
       </section>
+      
     </>
   );
 };

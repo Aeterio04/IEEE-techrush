@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './UserDashboard.css';
+import Dashnav from '../components/Dashnav';
 
 const App = () => {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
@@ -280,7 +281,9 @@ const App = () => {
   }
 
   return (
+    
     <div className="app-container">
+      <Dashnav />
       {/* Background decorative elements */}
       <div className="background-elements">
         <div className="floating-circle circle-1"></div>

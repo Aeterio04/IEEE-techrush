@@ -814,4 +814,4 @@ const App = () => {
   );
 };
 
-export default Userdashboard;
+export default UserDashboard;

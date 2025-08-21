@@ -153,5 +153,3 @@ Contributions are welcome! Please fork the repo and submit a pull request with c
 This project is licensed under the **MIT License** – feel free to use and adapt it for your NGO projects.
 
 ---
-
-Do you want me to **make it more recruiter-focused** (highlighting your technical skills for resumes) or keep it more **donor/NGO-facing** (like product documentation)?

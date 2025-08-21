@@ -51,7 +51,7 @@ Access global analytics (total donations, active users, trending causes)
 - Notifications – Updates via in-app notifications and email
 
 Project Structure
-
+```
 ngo-donation-app/
 │
 ├── backend/                # Django backend
@@ -76,7 +76,7 @@ ngo-donation-app/
 └── README.md               # Project documentation
 
 
-
+```
 
 ## ⚙️ Installation & Setup
 

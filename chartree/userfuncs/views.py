@@ -16,6 +16,11 @@ from rest_framework.authtoken.models import Token
 from userfuncs.models import donation,notification,donationmapping
 from datetime import date,timedelta
 from ngofunc.models import ngorequests
+from django.core.mail import send_mail
+from django.conf import settings
+from django.core.mail import EmailMessage
+
+
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -233,7 +238,10 @@ def setdonation(request):
             if((ngoreq.amount-ngoreq.recieved)>currentdon.quantity):
                 noti1=notification.objects.create(user=ngo.user,type="accepted", title= "Donation Recieved",message=f"You have recieved a donation of {currentdon.quantity} {currentdon.tag} from user {user.username} on the request {ngoreq.title}, to contact the volunteer, please contact {user.contact}")
                 noti2=notification.objects.create(user=user,type="accepted", title= "Donation Successful",message=f"You have donated your item request {currentdon.title} to {ngo.user.username}. These should be donated by {date.today()+timedelta(days=7)} to: \n{ngo.address} \n For more information, contact: {ngo.user.contact}")
-            
+
+                email = EmailMessage('Donation Successful', f"You have donated your item request {currentdon.title} to {ngo.user.username}. These should be donated by {date.today()+timedelta(days=7)} to: \n{ngo.address} \n For more information, contact: {ngo.user.contact}", settings.EMAIL_HOST_USER, [user.email])
+                email.send()
+
                 donmap=donationmapping.objects.create(donation_request=currentdon,ngo_request=ngoreq,amount_allocated=currentdon.quantity,ngo_user=ngo,user=user,donation_date=date.today())
 
                 ngoreq.recieved+=currentdon.quantity

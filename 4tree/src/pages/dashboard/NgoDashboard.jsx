@@ -718,6 +718,7 @@ const NGODashboard = () => {
                     <div key={index} className="donation-card">
                       <p><strong>Request Name:</strong> {item.RequestName} </p>
                       <p><strong>Username:</strong> {item.DonorUsername}</p>
+                      <p><strong>Amount:</strong> {item.transactionamount}</p>
                       <p><strong>Contact:</strong> {item.DonorContact}</p>
                       <p><strong>Last Date of Donating: 
                       </strong> <br></br>{item.Date}</p>

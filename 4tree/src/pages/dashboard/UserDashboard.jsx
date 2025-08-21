@@ -13,6 +13,7 @@ const UserDashboard = () => {
   const [selectedDonationItems, setSelectedDonationItems] = useState([]);
   const [isDonationModalOpen, setIsDonationModalOpen] = useState(false);
   const [notis, setNotis] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Sample data
   const [donations, setDonations] = useState([]);
@@ -356,6 +357,7 @@ const UserDashboard = () => {
       alert('Please select at least one item to donate!');
       return;
     }
+    setIsSubmitting(true);
     const submissionData = {
       "donationID": selectedDonationItems,
       "ngoReq": currentRequest.id,
@@ -384,6 +386,7 @@ const UserDashboard = () => {
       // Success handling
       alert(`Thank you! Your donation has been confirmed for ${currentRequest.ngoName}. Please check your notifications pickup/drop-off details. 🎉`);
       closeDonationModal();
+      setIsSubmitting(false);
       window.location.reload();
 
       // Optional: Redirect or update UI
@@ -905,7 +908,7 @@ const UserDashboard = () => {
                   <button onClick={closeDonationModal} className="cancel-btn">
                     Cancel
                   </button>
-                  <button onClick={confirmDonation} className="confirm-btn">
+                  <button onClick={confirmDonation} disabled={isSubmitting} className="confirm-btn">
                     Confirm Donation
                   </button>
                 </div>

@@ -78,7 +78,7 @@ def ngologinfunc(request):
 @permission_classes([AllowAny])
 def getreq(request):
  
-    requests=donation.objects.filter(verified="Pending")
+    requests=donation.objects.filter(verified="Pending").order_by("-id")
     rlist=[]
     for r in requests:
         robj={}

@@ -166,6 +166,7 @@ def get_delivery(request,slug):
             dobj["RequestName"]=don.ngo_request.title
             dobj["DonorUsername"]=don.user.username
             dobj["DonorContact"]=don.user.contact
+            dobj['transactionamount']=don.amount_allocated
             dobj['Date']=don.donation_date
             dobj['Delivery_stat']=don.donation_request.recieved
             dlist.append(dobj)
